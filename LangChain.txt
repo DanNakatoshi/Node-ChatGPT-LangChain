@@ -1,0 +1,413 @@
+Introduction
+LangChain is a framework for developing applications powered by language models. It enables applications that are:
+
+Data-aware: connect a language model to other sources of data
+Agentic: allow a language model to interact with its environment
+The main value props of LangChain are:
+
+Components: abstractions for working with language models, along with a collection of implementations for each abstraction. Components are modular and easy-to-use, whether you are using the rest of the LangChain framework or not
+Off-the-shelf chains: a structured assembly of components for accomplishing specific higher-level tasks
+Off-the-shelf chains make it easy to get started. For more complex applications and nuanced use-cases, components make it easy to customize existing chains or build new ones.
+
+Get started
+Here’s how to install LangChain, set up your environment, and start building.
+
+We recommend following our Quickstart guide to familiarize yourself with the framework by building your first LangChain application.
+
+Note: These docs are for the LangChain Python package. For documentation on LangChain.js, the JS/TS version, head here.
+
+Modules
+LangChain provides standard, extendable interfaces and external integrations for the following modules, listed from least to most complex:
+
+Model I/O
+Interface with language models
+
+Data connection
+Interface with application-specific data
+
+Chains
+Construct sequences of calls
+
+Agents
+Let chains choose which tools to use given high-level directives
+
+Memory
+Persist application state between runs of a chain
+
+Callbacks
+Log and stream intermediate steps of any chain
+
+Examples, ecosystem, and resources
+Use cases
+Walkthroughs and best-practices for common end-to-end use cases, like:
+
+Chatbots
+Answering questions using sources
+Analyzing structured data
+and much more...
+Guides
+Learn best practices for developing with LangChain.
+
+Ecosystem
+LangChain is part of a rich ecosystem of tools that integrate with our framework and build on top of it. Check out our growing list of integrations and dependent repos.
+
+Additional resources
+Our community is full of prolific developers, creative builders, and fantastic teachers. Check out YouTube tutorials for great tutorials from folks in the community, and Gallery for a list of awesome LangChain projects, compiled by the folks at KyroLabs.
+
+Support
+Join us on GitHub or Discord to ask questions, share feedback, meet other developers building with LangChain, and dream about the future of LLM’s.
+
+
+
+API reference
+Head to the reference section for full documentation of all classes and methods in the LangChain Python package.
+
+Installation
+Official release
+To install LangChain run:
+
+Pip
+Conda
+pip install langchain
+
+That will install the bare minimum requirements of LangChain. A lot of the value of LangChain comes when integrating it with various model providers, datastores, etc. By default, the dependencies needed to do that are NOT installed. However, there are two other ways to install LangChain that do bring in those dependencies.
+
+To install modules needed for the common LLM providers, run:
+
+pip install langchain[llms]
+
+To install all modules needed for all integrations, run:
+
+pip install langchain[all]
+
+Note that if you are using zsh, you'll need to quote square brackets when passing them as an argument to a command, for example:
+
+pip install 'langchain[all]'
+
+From source
+If you want to install from source, you can do so by cloning the repo and running:
+
+pip install -e .
+
+Quickstart
+Installation
+To install LangChain run:
+
+Pip
+Conda
+pip install langchain
+
+For more details, see our Installation guide.
+
+Environment setup
+Using LangChain will usually require integrations with one or more model providers, data stores, APIs, etc. For this example, we'll use OpenAI's model APIs.
+
+First we'll need to install their Python package:
+
+pip install openai
+
+Accessing the API requires an API key, which you can get by creating an account and heading here. Once we have a key we'll want to set it as an environment variable by running:
+
+export OPENAI_API_KEY="..."
+
+If you'd prefer not to set an environment variable you can pass the key in directly via the openai_api_key named parameter when initiating the OpenAI LLM class:
+
+from langchain.llms import OpenAI
+
+llm = OpenAI(openai_api_key="...")
+
+Building an application
+Now we can start building our language model application. LangChain provides many modules that can be used to build language model applications. Modules can be used as stand-alones in simple applications and they can be combined for more complex use cases.
+
+LLMs
+Get predictions from a language model
+The basic building block of LangChain is the LLM, which takes in text and generates more text.
+
+As an example, suppose we're building an application that generates a company name based on a company description. In order to do this, we need to initialize an OpenAI model wrapper. In this case, since we want the outputs to be MORE random, we'll initialize our model with a HIGH temperature.
+
+from langchain.llms import OpenAI
+
+llm = OpenAI(temperature=0.9)
+
+And now we can pass in text and get predictions!
+
+llm.predict("What would be a good company name for a company that makes colorful socks?")
+# >> Feetful of Fun
+
+Chat models
+Chat models are a variation on language models. While chat models use language models under the hood, the interface they expose is a bit different: rather than expose a "text in, text out" API, they expose an interface where "chat messages" are the inputs and outputs.
+
+You can get chat completions by passing one or more messages to the chat model. The response will be a message. The types of messages currently supported in LangChain are AIMessage, HumanMessage, SystemMessage, and ChatMessage -- ChatMessage takes in an arbitrary role parameter. Most of the time, you'll just be dealing with HumanMessage, AIMessage, and SystemMessage.
+
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import (
+    AIMessage,
+    HumanMessage,
+    SystemMessage
+)
+
+chat = ChatOpenAI(temperature=0)
+chat.predict_messages([HumanMessage(content="Translate this sentence from English to French. I love programming.")])
+# >> AIMessage(content="J'aime programmer.", additional_kwargs={})
+
+
+It is useful to understand how chat models are different from a normal LLM, but it can often be handy to just be able to treat them the same. LangChain makes that easy by also exposing an interface through which you can interact with a chat model as you would a normal LLM. You can access this through the predict interface.
+
+chat.predict("Translate this sentence from English to French. I love programming.")
+# >> J'aime programmer
+
+Prompt templates
+Most LLM applications do not pass user input directly into an LLM. Usually they will add the user input to a larger piece of text, called a prompt template, that provides additional context on the specific task at hand.
+
+In the previous example, the text we passed to the model contained instructions to generate a company name. For our application, it'd be great if the user only had to provide the description of a company/product, without having to worry about giving the model instructions.
+
+LLMs
+Chat models
+With PromptTemplates this is easy! In this case our template would be very simple:
+
+from langchain.prompts import PromptTemplate
+
+prompt = PromptTemplate.from_template("What is a good name for a company that makes {product}?")
+prompt.format(product="colorful socks")
+
+What is a good name for a company that makes colorful socks?
+
+Chains
+Now that we've got a model and a prompt template, we'll want to combine the two. Chains give us a way to link (or chain) together multiple primitives, like models, prompts, and other chains.
+
+LLMs
+Chat models
+The simplest and most common type of chain is an LLMChain, which passes an input first to a PromptTemplate and then to an LLM. We can construct an LLM chain from our existing model and prompt template.
+
+Using this we can replace
+
+llm.predict("What would be a good company name for a company that makes colorful socks?")
+
+with
+
+from langchain.chains import LLMChain
+
+chain = LLMChain(llm=llm, prompt=prompt)
+chain.run("colorful socks")
+
+Feetful of Fun
+
+There we go, our first chain! Understanding how this simple chain works will set you up well for working with more complex chains.
+
+Agents
+Our first chain ran a pre-determined sequence of steps. To handle complex workflows, we need to be able to dynamically choose actions based on inputs.
+
+Agents do just this: they use a language model to determine which actions to take and in what order. Agents are given access to tools, and they repeatedly choose a tool, run the tool, and observe the output until they come up with a final answer.
+
+To load an agent, you need to choose a(n):
+
+LLM/Chat model: The language model powering the agent.
+Tool(s): A function that performs a specific duty. This can be things like: Google Search, Database lookup, Python REPL, other chains. For a list of predefined tools and their specifications, see the Tools documentation.
+Agent name: A string that references a supported agent class. An agent class is largely parameterized by the prompt the language model uses to determine which action to take. Because this notebook focuses on the simplest, highest level API, this only covers using the standard supported agents. If you want to implement a custom agent, see here. For a list of supported agents and their specifications, see here.
+For this example, we'll be using SerpAPI to query a search engine.
+
+You'll need to install the SerpAPI Python package:
+
+pip install google-search-results
+
+And set the SERPAPI_API_KEY environment variable.
+
+LLMs
+Chat models
+from langchain.agents import AgentType, initialize_agent, load_tools
+from langchain.llms import OpenAI
+
+# The language model we're going to use to control the agent.
+llm = OpenAI(temperature=0)
+
+# The tools we'll give the Agent access to. Note that the 'llm-math' tool uses an LLM, so we need to pass that in.
+tools = load_tools(["serpapi", "llm-math"], llm=llm)
+
+# Finally, let's initialize an agent with the tools, the language model, and the type of agent we want to use.
+agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+
+# Let's test it out!
+agent.run("What was the high temperature in SF yesterday in Fahrenheit? What is that number raised to the .023 power?")
+
+
+> Entering new AgentExecutor chain...
+
+Thought: I need to find the temperature first, then use the calculator to raise it to the .023 power.
+Action: Search
+Action Input: "High temperature in SF yesterday"
+Observation: San Francisco Temperature Yesterday. Maximum temperature yesterday: 57 °F (at 1:56 pm) Minimum temperature yesterday: 49 °F (at 1:56 am) Average temperature ...
+
+Thought: I now have the temperature, so I can use the calculator to raise it to the .023 power.
+Action: Calculator
+Action Input: 57^.023
+Observation: Answer: 1.0974509573251117
+
+Thought: I now know the final answer
+Final Answer: The high temperature in SF yesterday in Fahrenheit raised to the .023 power is 1.0974509573251117.
+
+> Finished chain.
+
+
+The high temperature in SF yesterday in Fahrenheit raised to the .023 power is 1.0974509573251117.
+
+Memory
+The chains and agents we've looked at so far have been stateless, but for many applications it's necessary to reference past interactions. This is clearly the case with a chatbot for example, where you want it to understand new messages in the context of past messages.
+
+The Memory module gives you a way to maintain application state. The base Memory interface is simple: it lets you update state given the latest run inputs and outputs and it lets you modify (or contextualize) the next input using the stored state.
+
+There are a number of built-in memory systems. The simplest of these is a buffer memory which just prepends the last few inputs/outputs to the current input - we will use this in the example below.
+
+LLMs
+Chat models
+from langchain import OpenAI, ConversationChain
+
+llm = OpenAI(temperature=0)
+conversation = ConversationChain(llm=llm, verbose=True)
+
+conversation.run("Hi there!")
+
+here's what's going on under the hood
+
+> Entering new chain...
+Prompt after formatting:
+The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
+
+Current conversation:
+
+Human: Hi there!
+AI:
+
+> Finished chain.
+
+>> 'Hello! How are you today?'
+
+
+Now if we run the chain again
+
+conversation.run("I'm doing well! Just having a conversation with an AI.")
+
+we'll see that the full prompt that's passed to the model contains the input and output of our first interaction, along with our latest input
+
+> Entering new chain...
+Prompt after formatting:
+The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
+
+Current conversation:
+
+Human: Hi there!
+AI:  Hello! How are you today?
+Human: I'm doing well! Just having a conversation with an AI.
+AI:
+
+> Finished chain.
+
+>> "That's great! What would you like to talk about?"
+
+
+Tutorials
+⛓ icon marks a new addition [last update 2023-07-05]
+
+DeepLearning.AI courses
+by Harrison Chase and Andrew Ng
+
+LangChain for LLM Application Development
+⛓ LangChain Chat with Your Data
+Handbook
+LangChain AI Handbook By James Briggs and Francisco Ingham
+
+Short Tutorials
+LangChain Crash Course - Build apps with language models by Patrick Loeber
+
+LangChain Crash Course: Build an AutoGPT app in 25 minutes by Nicholas Renotte
+
+LangChain Explained in 13 Minutes | QuickStart Tutorial for Beginners by Rabbitmetrics
+
+Tutorials
+LangChain for Gen AI and LLMs by James Briggs
+#1 Getting Started with GPT-3 vs. Open Source LLMs
+#2 Prompt Templates for GPT 3.5 and other LLMs
+#3 LLM Chains using GPT 3.5 and other LLMs
+LangChain Data Loaders, Tokenizers, Chunking, and Datasets - Data Prep 101
+#4 Chatbot Memory for Chat-GPT, Davinci + other LLMs
+#5 Chat with OpenAI in LangChain
+#6 Fixing LLM Hallucinations with Retrieval Augmentation in LangChain
+#7 LangChain Agents Deep Dive with GPT 3.5
+#8 Create Custom Tools for Chatbots in LangChain
+#9 Build Conversational Agents with Vector DBs
+Using NEW MPT-7B in Hugging Face and LangChain
+⛓ MPT-30B Chatbot with LangChain
+LangChain 101 by Greg Kamradt (Data Indy)
+What Is LangChain? - LangChain + ChatGPT Overview
+Quickstart Guide
+Beginner Guide To 7 Essential Concepts
+Beginner Guide To 9 Use Cases
+Agents Overview + Google Searches
+OpenAI + Wolfram Alpha
+Ask Questions On Your Custom (or Private) Files
+Connect Google Drive Files To OpenAI
+YouTube Transcripts + OpenAI
+Question A 300 Page Book (w/ OpenAI + Pinecone)
+Workaround OpenAI's Token Limit With Chain Types
+Build Your Own OpenAI + LangChain Web App in 23 Minutes
+Working With The New ChatGPT API
+OpenAI + LangChain Wrote Me 100 Custom Sales Emails
+Structured Output From OpenAI (Clean Dirty Data)
+Connect OpenAI To +5,000 Tools (LangChain + Zapier)
+Use LLMs To Extract Data From Text (Expert Mode)
+Extract Insights From Interview Transcripts Using LLMs
+5 Levels Of LLM Summarizing: Novice to Expert
+Control Tone & Writing Style Of Your LLM Output
+Build Your Own AI Twitter Bot Using LLMs
+ChatGPT made my interview questions for me (Streamlit + LangChain)
+Function Calling via ChatGPT API - First Look With LangChain
+⛓ Extract Topics From Video/Audio With LLMs (Topic Modeling w/ LangChain)
+LangChain How to and guides by Sam Witteveen
+LangChain Basics - LLMs & PromptTemplates with Colab
+LangChain Basics - Tools and Chains
+ChatGPT API Announcement & Code Walkthrough with LangChain
+Conversations with Memory (explanation & code walkthrough)
+Chat with Flan20B
+Using Hugging Face Models locally (code walkthrough)
+PAL : Program-aided Language Models with LangChain code
+Building a Summarization System with LangChain and GPT-3 - Part 1
+Building a Summarization System with LangChain and GPT-3 - Part 2
+Microsoft's Visual ChatGPT using LangChain
+LangChain Agents - Joining Tools and Chains with Decisions
+Comparing LLMs with LangChain
+Using Constitutional AI in LangChain
+Talking to Alpaca with LangChain - Creating an Alpaca Chatbot
+Talk to your CSV & Excel with LangChain
+BabyAGI: Discover the Power of Task-Driven Autonomous Agents!
+Improve your BabyAGI with LangChain
+Master PDF Chat with LangChain - Your essential guide to queries on documents
+Using LangChain with DuckDuckGO Wikipedia & PythonREPL Tools
+Building Custom Tools and Agents with LangChain (gpt-3.5-turbo)
+LangChain Retrieval QA Over Multiple Files with ChromaDB
+LangChain Retrieval QA with Instructor Embeddings & ChromaDB for PDFs
+LangChain + Retrieval Local LLMs for Retrieval QA - No OpenAI!!!
+Camel + LangChain for Synthetic Data & Market Research
+Information Extraction with LangChain & Kor
+Converting a LangChain App from OpenAI to OpenSource
+Using LangChain Output Parsers to get what you want out of LLMs
+Building a LangChain Custom Medical Agent with Memory
+Understanding ReACT with LangChain
+OpenAI Functions + LangChain : Building a Multi Tool Agent
+What can you do with 16K tokens in LangChain?
+Tagging and Extraction - Classification using OpenAI Functions
+⛓ HOW to Make Conversational Form with LangChain
+LangChain by Prompt Engineering
+LangChain Crash Course — All You Need to Know to Build Powerful Apps with LLMs
+Working with MULTIPLE PDF Files in LangChain: ChatGPT for your Data
+ChatGPT for YOUR OWN PDF files with LangChain
+Talk to YOUR DATA without OpenAI APIs: LangChain
+Langchain: PDF Chat App (GUI) | ChatGPT for Your PDF FILES
+LangFlow: Build Chatbots without Writing Code
+LangChain: Giving Memory to LLMs
+BEST OPEN Alternative to OPENAI's EMBEDDINGs for Retrieval QA: LangChain
+LangChain by Chat with data
+LangChain Beginner's Tutorial for Typescript/Javascript
+GPT-4 Tutorial: How to Chat With Multiple PDF Files (~1000 pages of Tesla's 10-K Annual Reports)
+GPT-4 & LangChain Tutorial: How to Chat With A 56-Page PDF Document (w/Pinecone)
+LangChain & Supabase Tutorial: How to Build a ChatGPT Chatbot For Your Website
+LangChain Agents: Build Personal Assistants For Your Data (Q&A with Harrison Chase and Mayo Oshin)
+⛓ icon marks a new addition [last update 2023-07-05]
